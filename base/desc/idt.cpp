@@ -5,8 +5,8 @@ __attribute__((aligned(0x10)))
 static InterruptDescriptor32 idt[256]; // Create an array of IDT entries; aligned for performance
 
 typedef struct {
-	uint16_t	limit;
-	uint32_t	base;
+    uint16_t	limit;
+    uint32_t	base;
 } __attribute__((packed)) idtr_t;
 static idtr_t idtr;
 
