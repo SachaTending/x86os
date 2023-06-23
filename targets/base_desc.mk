@@ -1,0 +1,1 @@
+OBJ += base/desc/gdt.o base/desc/helper.o
