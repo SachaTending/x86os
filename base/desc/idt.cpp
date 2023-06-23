@@ -14,7 +14,7 @@ void IDT::SetDesc(uint8_t vector, void* isr, uint8_t flags) {
     InterruptDescriptor32* descriptor = &idt[vector];
 
     descriptor->offset_1       = (uint32_t)isr & 0xFFFF;
-    descriptor->selector       = 0x08; // this value can be whatever offset your kernel code selector is in your GDT
+    descriptor->selector       = 0x08;
     descriptor->type_attributes= flags;
     descriptor->offset_2       = (uint32_t)isr >> 16;
     descriptor->zero           = 0;
