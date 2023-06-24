@@ -7,17 +7,14 @@ gdt_ptr_t gdt_e;
 extern "C" void gdt_flush(uint32_t gdt);
 
 void GDT::Init() {
-    gdt_e.base = (uint32_t)&gdt;
-    gdt_e.limit = sizeof(gdt) - 1;
+    gdt_e.limit = (sizeof(gdt_entry_t) * 5) - 1;
+    gdt_e.base  = (uint32_t)&gdt;
 
-    GDT::SetDesc(1, 0, 0xFFFFFFFF, 0x9A, 0xCF);
-    /* Kernel data, access(92 = 1 00 1 0 0 1 0)
-        Only differ at the fifth bit(counting from least insignificant bit), 0 means it's a data segment.
-    */
-    GDT::SetDesc(2, 0, 0xFFFFFFFF, 0x92, 0xCF);
-    // User code and data segments, only differ in ring number(ring 3)
-    GDT::SetDesc(3, 0, 0xFFFFFFFF, 0xFA, 0xCF);
-    GDT::SetDesc(4, 0, 0xFFFFFFFF, 0xF2, 0xCF);
+    GDT::SetDesc(0, 0, 0, 0, 0);                // Null segment
+    GDT::SetDesc(1, 0, 0xFFFFFFFF, 0x9A, 0xCF); // Code segment
+    GDT::SetDesc(2, 0, 0xFFFFFFFF, 0x92, 0xCF); // Data segment
+    GDT::SetDesc(3, 0, 0xFFFFFFFF, 0xFA, 0xCF); // User mode code segment
+    GDT::SetDesc(4, 0, 0xFFFFFFFF, 0xF2, 0xCF); // User mode data segment
 
     gdt_flush((uint32_t)&gdt_e);
 }

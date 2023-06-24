@@ -1,0 +1,1 @@
+OBJ+=libc/strlen.o
