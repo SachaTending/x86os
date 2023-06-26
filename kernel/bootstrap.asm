@@ -26,10 +26,10 @@ align 4
 ; System V ABI standard and de-facto extensions. The compiler will assume the
 ; stack is properly aligned and failure to align the stack will result in
 ; undefined behavior.
-section .bss
+section .data
 align 16
 stack_bottom:
-resb 32768 ; 16 KiB
+resb 65545 ; 16 KiB
 stack_top:
 
 ; The linker script specifies _start as the entry point to the kernel and the

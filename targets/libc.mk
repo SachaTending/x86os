@@ -1,1 +1,1 @@
-OBJ+=libc/strlen.o
+OBJ+=libc/strlen.o libc/strcmp.o
