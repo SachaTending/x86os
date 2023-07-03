@@ -2,7 +2,7 @@ CPP = g++
 LD = ld
 NASM = nasm
 
-CFLAGS = -I include -m32 -march=i386 -ffreestanding -O2 -Wall -Wextra -fno-exceptions -fno-rtti -c -g
+CFLAGS = -I include -m32 -march=i386 -fpermissive -c -g
 LDFLAGS = -melf_i386 -A i386 -T link.ld
 
 OBJ = 

@@ -3,18 +3,19 @@
 %define KERNEL_DATA_SEGMENT 0x10
 %define CODE_DATA_SEGMENT 0x08
 
-[GLOBAL gdt_flush]
-gdt_flush:
-    mov eax, [esp + 4]
-    lgdt [eax]
-
-    mov ax, KERNEL_DATA_SEGMENT
+gdt_remap:
     mov ds, ax
     mov es, ax
     mov fs, ax
     mov gs, ax
     mov ss, ax
+    ret
 
+[GLOBAL gdt_flush]
+gdt_flush:
+    mov eax, [esp + 4]
+    lgdt [eax]
+    mov ax, KERNEL_DATA_SEGMENT
     jmp CODE_DATA_SEGMENT:flush 
 flush:
     ret
