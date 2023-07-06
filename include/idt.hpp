@@ -22,9 +22,10 @@ typedef struct {
 	uint16_t	limit;
 	uint32_t	base;
 } __attribute__((packed)) idtr_t;
-
+typedef void (*idt_handler_t)(registers_t *);
 namespace IDT
 {
 	void Init();
-	void SetDesc(uint8_t vector, void* isr, uint8_t flags);
+	void SetDesc(uint8_t vector, uint32_t isr, uint8_t flags);
+	void AddHandler(int vector, idt_handler_t handl);
 } // namespace IDT
