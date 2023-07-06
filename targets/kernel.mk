@@ -1,1 +1,1 @@
-OBJ += kernel/bootstrap.o kernel/bootstrap2.o kernel/main.o
+OBJ += kernel/boot.o kernel/main.o
