@@ -2,6 +2,9 @@
 #include <gdt.hpp>
 #include <idt.hpp>
 #include <logging.hpp>
+#include <timer.hpp>
+#include <vmsvga.hpp>
+#include <pci.hpp>
 
 static Logging log("Kernel");
 
@@ -15,6 +18,12 @@ void callConstructors(void)
         (*i)();
 }
 
+void idle() {
+	log.info("Going to idle.\n");
+	for(;;) asm volatile("hlt");
+}
+void kbd_init();
+extern int timer_tick;
 extern "C" void kernel_main() {
 	Terminal::Init();
 	callConstructors(); // Needed by logging system.
@@ -24,5 +33,11 @@ extern "C" void kernel_main() {
 	IDT::Init();
 	log.info("IDT Initializated.\n");
 	log.info("Starting drivers...\n");
-	for (;;)asm volatile("hlt");
+	PCI::Init(); // Init pci
+	Timer::Init(); // Init timer
+	VMSVGA::Init(); // Init vmsvga
+	kbd_init(); // Init keyboard.
+	asm volatile ("hlt");
+	log.info("Init done!\n");
+	idle();
 }

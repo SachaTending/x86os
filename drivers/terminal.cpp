@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <io.h>
 #include <terminal.hpp>
+#include <libc.hpp>
  
 /* Hardware text mode color constants. */
 enum vga_color {
@@ -30,14 +31,6 @@ static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg)
 static inline uint16_t vga_entry(unsigned char uc, uint8_t color) 
 {
 	return (uint16_t) uc | (uint16_t) color << 8;
-}
- 
-size_t strlen(const char* str) 
-{
-	size_t len = 0;
-	while (str[len])
-		len++;
-	return len;
 }
  
 static const size_t VGA_WIDTH = 80;
@@ -85,8 +78,22 @@ void update_cursor(int x, int y)
 	outb(0x3D4, 0x0E);
 	outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
 }
-void terminal_putchar(char c) 
+void scroll() {
+    // Move up
+    void * start = (void*)(terminal_buffer + 1 * VGA_WIDTH * 2);
+    uint32_t size = terminal_row * VGA_WIDTH * 2;
+    if(terminal_row < 25)
+        return;
+    memcpy(terminal_buffer, start, size);
+    // Delete
+    start = (void*)(terminal_buffer + size);
+    memsetw((uint16_t *)start, terminal_buffer[terminal_row * VGA_WIDTH + terminal_column], VGA_WIDTH);
+    terminal_row--;
+}
+
+void Terminal::PutChar(char c) 
 {
+	scroll();
     if (c == '\n') {
         terminal_column = 0;
         terminal_row++;
@@ -113,7 +120,7 @@ void terminal_putchar(char c)
 void terminal_write(const char* data, size_t size) 
 {
 	for (size_t i = 0; i < size; i++)
-		terminal_putchar(data[i]);
+		Terminal::PutChar(data[i]);
 }
  
 void Terminal::Print(const char *text) 
