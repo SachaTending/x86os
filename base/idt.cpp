@@ -36,7 +36,7 @@ void IDT::Init() {
     idtr.limit = (uint16_t)sizeof(idt_entry_t) * 256 - 1;
 
     for (uint8_t vector = 0; vector < 32; vector++) {
-        (vector, isr_common_stub, 0x8E);
+        (vector, (void *)isr_common_stub, 0x8E);
     }
 
     __asm__ volatile ("lidt %0" : : "m"(idtr)); // load the new IDT
