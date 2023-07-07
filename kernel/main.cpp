@@ -5,6 +5,7 @@
 #include <timer.hpp>
 #include <vmsvga.hpp>
 #include <pci.hpp>
+#include <rtl8139.hpp>
 
 static Logging log("Kernel");
 
@@ -23,7 +24,6 @@ void idle() {
 	for(;;) asm volatile("hlt");
 }
 void kbd_init();
-extern int timer_tick;
 extern "C" void kernel_main() {
 	Terminal::Init();
 	callConstructors(); // Needed by logging system.
@@ -36,6 +36,7 @@ extern "C" void kernel_main() {
 	PCI::Init(); // Init pci
 	Timer::Init(); // Init timer
 	VMSVGA::Init(); // Init vmsvga
+	RTL8139::Init(); // Init rtl8139
 	kbd_init(); // Init keyboard.
 	asm volatile ("hlt");
 	log.info("Init done!\n");

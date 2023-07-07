@@ -27,4 +27,4 @@ clean:
 	@-rm $(OBJ)
 
 run: kernel
-	@qemu-system-i386 -kernel kernel.elf -serial stdio -device vmware-svga
+	@qemu-system-i386 -kernel kernel.elf -serial stdio -device vmware-svga -device rtl8139,netdev=a -netdev user,id=a,hostfwd=udp::1200-:1200
