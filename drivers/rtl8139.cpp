@@ -23,17 +23,16 @@ static uint8_t TSD_array[4] = {0x10, 0x14, 0x18, 0x1C};
 #define RX_BUF_SIZE 8192
 
 static void receive_packet() {
+    uint8_t tmp_cmd = inb(io_base+0x37);
+    if (tmp_cmd & 0x01) {
+        log.info("buffer cleared.\n");
+        return;
+    }
     uint16_t * t = (uint16_t*)(&rx_buffer + current_packet_ptr);
     // Skip packet header, get packet length
     uint16_t packet_length = *(t + 1);
-    log.info("Length: %u\n", packet_length);
-    log.info("Data: \n");
     // Skip, packet header and packet length, now t points to the packet data
     t = t + 2;
-    for (int i=0;i<packet_length;i++) {
-        printf("%c", t[i]);
-    }
-    printf("\n");
     //qemu_printf("Printing packet at addr 0x%x\n", (uint32_t)t);
     //xxd(t, packet_length);
 
