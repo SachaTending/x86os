@@ -4,6 +4,7 @@
 #include <vmsvga.hpp>
 #include <pci.hpp>
 #include <libc.hpp>
+#include <graphics.hpp>
 
 static Logging log("VMSVGA");
 pci_dev_t svga_dev;
@@ -30,7 +31,12 @@ uint32_t svga_read_fifo(uint32_t reg) {
 void svga_write_fifo(uint32_t data) {
     fifo_start[svga_read_fifo(SVGA_FIFO_NEXT_CMD)] = data;
 }
+
+static fbinfo_t f_info;
+
 void putpixel(int x, int y, int color);
+void svga_flush();
+extern bool terminal_disabled;
 void VMSVGA::Init() {
     log.info("Starting...\n");
     svga_dev = PCI::Get(0x15AD, 0x0405, -1);
@@ -60,14 +66,47 @@ void VMSVGA::Init() {
     log.info("Max width: %u\n", svga_read_reg(SVGA_REG_MAX_WIDTH));
     log.info("Max height: %u\n", svga_read_reg(SVGA_REG_MAX_HEIGHT));
     log.info("FIFO Size: %u\n", fifo_size);
+    log.info("FB Size: %u\n", svga_read_reg(SVGA_REG_FB_SIZE));
+    log.info("Bytes per line: %u\n", svga_read_reg(SVGA_REG_BYTES_PER_LINE));
+    VMSVGA::SetMode(1024, 768, 32);
+    //svga_write_reg(SVGA_REG_ENABLE, 0);
+    for (int i=0;i<1024*768;i++) {
+        fb_start[i] = 0;
+    }
+    // Disable terminal
+    terminal_disabled = true;
+    f_info.width = svga_read_reg(SVGA_REG_WIDTH);
+    f_info.height = svga_read_reg(SVGA_REG_HEIGHT);
+    f_info.pitch = svga_read_reg(SVGA_REG_BYTES_PER_LINE);
+    Graphics::Init(putpixel, &f_info);
+    Graphics::Square_Filled(0, 0, 100, 100, 100);
+    Graphics::Square_Filled(500, 500, 600, 600, 200);
 }
 void putpixel(int x, int y, int color) {
-    uint32_t *pixel = (uint32_t*)(svga_read_reg(SVGA_REG_FB_START) + y*(svga_read_reg(SVGA_REG_HEIGHT)*svga_read_reg(SVGA_REG_FB_OFFEST)) + x*svga_read_reg(SVGA_REG_FB_OFFEST));
-    *pixel = color;
+    while (svga_read_reg(SVGA_REG_BUSY)) {
+        // Do nothing.
+    }
+    uint32_t *where = (uint32_t *)svga_read_reg(SVGA_REG_FB_START);
+    int row = (y * svga_read_reg(SVGA_REG_BYTES_PER_LINE)) / 4;
+    where[row + x] = color;
+    svga_flush();
+    //where[x*y] = color;
 }
+void svga_fifo_write(uint32_t data) {
+    fifo_start[fifo_start[SVGA_FIFO_NEXT_CMD]] = data;
+    //fifo_start[SVGA_FIFO_NEXT_CMD] += 4;
+}
+void svga_flush() {
+    //svga_write_reg(SVGA_REG_ENABLE, 0);
+    svga_write_reg(SVGA_REG_ENABLE, 1);
+}
+
 void VMSVGA::SetMode(uint32_t w, uint32_t h, uint32_t bpp) {
     svga_write_reg(SVGA_REG_BPP, bpp);
     svga_write_reg(SVGA_REG_WIDTH, w);
     svga_write_reg(SVGA_REG_HEIGHT, h);
     svga_write_reg(SVGA_REG_ENABLE, 1);
+    f_info.width = svga_read_reg(SVGA_REG_WIDTH);
+    f_info.height = svga_read_reg(SVGA_REG_HEIGHT);
+    f_info.pitch = svga_read_reg(SVGA_REG_BYTES_PER_LINE);
 }

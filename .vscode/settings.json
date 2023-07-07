@@ -2,6 +2,7 @@
     "files.associations": {
         "random": "cpp",
         "vector": "cpp",
-        "compare": "cpp"
+        "compare": "cpp",
+        "iostream": "cpp"
     }
 }
