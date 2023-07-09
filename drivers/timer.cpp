@@ -9,7 +9,7 @@ void timer_idt(registers_t *regs) {
 }
 
 void Timer::Init() {
-    IDT::AddHandler(1, timer_idt);
+    IDT::AddHandler(0, timer_idt);
     int divisor = 1193180 / 100;
     outb(0x43, 0x36);
 	outb(0x40, divisor & 0xff);

@@ -4,6 +4,7 @@
 #include <rtl8139.hpp>
 #include <idt.hpp>
 #include <libc.hpp>
+#include <common.h>
 
 static Logging log("RTL8139");
 
@@ -48,6 +49,7 @@ static void receive_packet() {
 }
 
 static void idt_handl(registers_t *regs) {
+    UNUSED(regs);
     uint16_t status = inw(io_base+0x3e);
     if (status & (1<<2)) {
         log.info("Packed sended.\n");
@@ -98,6 +100,6 @@ void RTL8139::Init() {
     outl(io_base+0x44, 0xf | (1 << 7));
     outb(io_base+0x37, 0x0C);
     irq = PCI::Read(rtl_dev, PCI_INTERRUPT_LINE);
-    IDT::AddHandler(irq+1, idt_handl);
+    IDT::AddHandler(irq, idt_handl);
     read_mac_addr();
 }

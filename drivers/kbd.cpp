@@ -51,5 +51,5 @@ void kbd_int(registers_t *regs) {
 }
 
 void kbd_init() {
-    IDT::AddHandler(2, kbd_int);
+    IDT::AddHandler(1, kbd_int);
 }

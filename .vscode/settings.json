@@ -3,6 +3,7 @@
         "random": "cpp",
         "vector": "cpp",
         "compare": "cpp",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "fb.h": "c"
     }
 }

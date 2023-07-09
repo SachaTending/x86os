@@ -9,7 +9,7 @@ static idt_entry_t idt[256]; // Create an array of IDT entries; aligned for perf
 idtr_t idtr;
 
 void IDT::SetDesc(uint8_t vector, uint32_t isr, uint8_t flags) {
-    vector += 31;
+    vector += 32;
     idt_entry_t* descriptor = &idt[vector];
 
     descriptor->isr_low        = (uint32_t)isr & 0xFFFF;
@@ -27,8 +27,8 @@ void IDT::AddHandler(int vector, idt_handler_t handl) {
 
 extern "C" void irq_handler(registers_t *regs) {
     if (regs->int_no > 31) {
-        if (handlers[regs->int_no - 32] != 0) {
-            handlers[regs->int_no - 32](regs);
+        if (handlers[regs->int_no - 31] != 0) {
+            handlers[regs->int_no - 31](regs);
         }
         outb(0x20, 0x20);
         if (regs->int_no > 0x28) {

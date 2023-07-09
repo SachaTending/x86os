@@ -89,12 +89,11 @@ void scroll() {
     // Delete
     start = (void*)(terminal_buffer + size);
     memsetw((uint16_t *)start, terminal_buffer[terminal_row * VGA_WIDTH + terminal_column], VGA_WIDTH);
-    terminal_row--;
+    terminal_row-=2;
 }
 
 void Terminal::PutChar(char c) 
 {
-	scroll();
     if (c == '\n') {
         terminal_column = 0;
         terminal_row++;
@@ -112,9 +111,11 @@ void Terminal::PutChar(char c)
 	if (++terminal_column >= VGA_WIDTH) {
 		terminal_column = 0;
 		if (++terminal_row >= VGA_HEIGHT)
-			terminal_row = 0;
+			//terminal_row = 0;
+			terminal_row = terminal_row;
 	}
 	end:
+	scroll();
 	update_cursor(terminal_column, terminal_row);
 }
  

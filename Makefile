@@ -1,4 +1,5 @@
 CPP = g++
+CC = gcc
 LD = ld
 NASM = nasm
 
@@ -19,6 +20,10 @@ kernel: $(OBJ)
 	@echo "  [C++]  $@"
 	@$(CPP) $(CFLAGS) -o $@ $<
 
+%.o: %.c
+	@echo "  [CC]   $@"
+	@$(CC) $(CFLAGS) -o $@ $<
+
 %.o: %.asm
 	@echo "  [NASM] $@"
 	@$(NASM) -felf32 -o $@ $<
@@ -27,4 +32,4 @@ clean:
 	@-rm $(OBJ)
 
 run: kernel
-	@qemu-system-i386 -kernel kernel.elf -serial stdio -device vmware-svga -device rtl8139,netdev=a -netdev user,id=a,hostfwd=udp::1200-:1200
+	@qemu-system-i386 -kernel kernel.elf -serial stdio -device vmware-svga -device rtl8139,netdev=a -netdev user,id=a,hostfwd=udp::1200-:1200 -m 512m

@@ -13,6 +13,7 @@ static uint16_t port_base = 0;
 uint32_t *fb_start = 0;
 uint32_t *fifo_start = 0;
 uint32_t fifo_size = 0;
+static uint32_t pitch;
 
 void svga_write_reg(uint32_t reg, uint32_t val) {
     outl(port_base+SVGA_INDEX, reg);
@@ -79,17 +80,25 @@ void VMSVGA::Init() {
     f_info.height = svga_read_reg(SVGA_REG_HEIGHT);
     f_info.pitch = svga_read_reg(SVGA_REG_BYTES_PER_LINE);
     Graphics::Init(putpixel, &f_info);
-    Graphics::Square_Filled(0, 0, 100, 100, 100);
-    Graphics::Square_Filled(500, 500, 600, 600, 200);
+    #define a 20
+    for (int x=0;x<500;x++) {
+        for (int y=0;y<500;y++) {
+            Graphics::Square_Filled(x, y, x+a, y+a, 100);
+            svga_flush();
+            //for (int i=0;i<1;i++);
+            Graphics::Square_Filled(x, y, x+a, y+a, 0);
+        }
+    }
 }
 void putpixel(int x, int y, int color) {
     while (svga_read_reg(SVGA_REG_BUSY)) {
         // Do nothing.
+        break; //But who asked?
     }
-    uint32_t *where = (uint32_t *)svga_read_reg(SVGA_REG_FB_START);
-    int row = (y * svga_read_reg(SVGA_REG_BYTES_PER_LINE)) / 4;
+    uint32_t *where = fb_start;
+    int row = (y * pitch) / 4;
     where[row + x] = color;
-    svga_flush();
+    //if (color != 0)svga_flush();
     //where[x*y] = color;
 }
 void svga_fifo_write(uint32_t data) {
@@ -109,4 +118,6 @@ void VMSVGA::SetMode(uint32_t w, uint32_t h, uint32_t bpp) {
     f_info.width = svga_read_reg(SVGA_REG_WIDTH);
     f_info.height = svga_read_reg(SVGA_REG_HEIGHT);
     f_info.pitch = svga_read_reg(SVGA_REG_BYTES_PER_LINE);
+    fb_start = (uint32_t *)svga_read_reg(SVGA_REG_FB_START);
+    pitch = svga_read_reg(SVGA_REG_BYTES_PER_LINE);
 }
