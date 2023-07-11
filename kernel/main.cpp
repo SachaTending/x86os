@@ -47,6 +47,7 @@ const char * mmap_type_to_string(multiboot_uint32_t type) {
 }
 
 void kbd_init();
+void test();
 extern "C" void kernel_main(multiboot_info_t *m) {
 	mbi = m;
 	Terminal::Init();
@@ -80,6 +81,7 @@ extern "C" void kernel_main(multiboot_info_t *m) {
 	kbd_init(); // Init keyboard.
 	//Mouse::Init(); // Init mouse
 	asm volatile ("hlt");
+	test();
 	log.info("Init done!\n");
 	idle();
 }

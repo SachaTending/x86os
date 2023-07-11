@@ -27,8 +27,8 @@ void IDT::AddHandler(int vector, idt_handler_t handl) {
 
 extern "C" void irq_handler(registers_t *regs) {
     if (regs->int_no > 31) {
-        if (handlers[regs->int_no - 31] != 0) {
-            handlers[regs->int_no - 31](regs);
+        if (handlers[regs->int_no - 32] != 0) {
+            handlers[regs->int_no - 32](regs);
         }
         outb(0x20, 0x20);
         if (regs->int_no > 0x28) {
@@ -75,6 +75,6 @@ void IDT::Init() {
     IDT::SetDesc(13, (uint32_t)irq13, 0x8E);
     IDT::SetDesc(14, (uint32_t)irq14, 0x8E);
     IDT::SetDesc(15, (uint32_t)irq15, 0x8E);
-    idt_load();
     idt_remap();
+    idt_load();
 }
