@@ -53,9 +53,14 @@ extern "C" void kernel_main(multiboot_info_t *m) {
 	Terminal::Init();
 	callConstructors(); // Needed by logging system.
 	log.info("Starting...\n");
+	GDT::Init();
+	log.info("GDT Initializated.\n");
+	IDT::Init();
+	log.info("IDT Initializated.\n");
 	log.info("Im booted by: %s\n", mbi->boot_loader_name);
 	log.info("Memory map length: %u\n", mbi->mmap_length);
 	multiboot_memory_map_t *mmap;
+	unsigned avaible_size = 0;
 	for (mmap = (multiboot_memory_map_t *) mbi->mmap_addr;
            (unsigned long) mmap < mbi->mmap_addr + mbi->mmap_length;
            mmap = (multiboot_memory_map_t *) ((unsigned long) mmap
@@ -68,18 +73,26 @@ extern "C" void kernel_main(multiboot_info_t *m) {
                 (unsigned) (mmap->len >> 32),
                 (unsigned) (mmap->len & 0xffffffff),
                 mmap_type_to_string(mmap->type));
+		if (mmap->type == MULTIBOOT_MEMORY_AVAILABLE) {
+			avaible_size += mmap->len;
+		}
 	}
-	GDT::Init();
-	log.info("GDT Initializated.\n");
-	IDT::Init();
-	log.info("IDT Initializated.\n");
+	if (avaible_size / 1024 > 1024) {
+		if ((avaible_size / 1024) > 1024) {
+			log.info("Avaible memory: %uMB\n", (avaible_size / 1024) / 1024);
+		} else {
+			log.info("Avaible memory: %uKB\n", avaible_size / 1024);
+		}
+	} else {
+		log.info("Avaible memory: %u\n", avaible_size);
+	}
 	log.info("Starting drivers...\n");
 	PCI::Init(); // Init pci
 	Timer::Init(); // Init timer
-	//VMSVGA::Init(); // Init vmsvga
+	VMSVGA::Init(); // Init vmsvga
 	RTL8139::Init(); // Init rtl8139
 	kbd_init(); // Init keyboard.
-	//Mouse::Init(); // Init mouse
+	Mouse::Init(); // Init mouse
 	asm volatile ("hlt");
 	test();
 	log.info("Init done!\n");

@@ -75,6 +75,6 @@ void IDT::Init() {
     IDT::SetDesc(13, (uint32_t)irq13, 0x8E);
     IDT::SetDesc(14, (uint32_t)irq14, 0x8E);
     IDT::SetDesc(15, (uint32_t)irq15, 0x8E);
-    idt_remap();
     idt_load();
+    idt_remap();
 }

@@ -22,7 +22,14 @@ static uint8_t TSAD_array[4] = {0x20, 0x24, 0x28, 0x2C};
 static uint8_t TSD_array[4] = {0x10, 0x14, 0x18, 0x1C};
 
 #define RX_BUF_SIZE 8192
-
+typedef struct ethernet_frame {
+  uint8_t dst_mac_addr[6];
+  uint8_t src_mac_addr[6];
+  uint16_t type;
+  uint8_t data[];
+} __attribute__((packed)) ethernet_frame_t;
+#define ETHERNET_TYPE_ARP 0x0806
+#define ETHERNET_TYPE_IP  0x0800
 static void receive_packet() {
     uint8_t tmp_cmd = inb(io_base+0x37);
     if (tmp_cmd & 0x01) {
@@ -39,7 +46,24 @@ static void receive_packet() {
 
     // Now, ethernet layer starts to handle the packet(be sure to make a copy of the packet, insteading of using the buffer)
     // and probabbly this should be done in a separate thread...
-
+    ethernet_frame_t *pack = (ethernet_frame_t *)t;
+    log.info("dst mac: %01x:%01x:%01x:%01x:%01x:%01x\n", 
+        pack->dst_mac_addr[0], 
+        pack->dst_mac_addr[1], 
+        pack->dst_mac_addr[2], 
+        pack->dst_mac_addr[3], 
+        pack->dst_mac_addr[4], 
+        pack->dst_mac_addr[5]
+    );
+    log.info("src mac: %02x:%02x:%02x:%02x:%02x:%02x\n", 
+        pack->src_mac_addr[0], 
+        pack->src_mac_addr[1], 
+        pack->src_mac_addr[2], 
+        pack->src_mac_addr[3], 
+        pack->src_mac_addr[4], 
+        pack->src_mac_addr[5]
+    );
+    log.info("type: %u\n", pack->type);
     current_packet_ptr = (current_packet_ptr + packet_length + 4 + 3) & ~3;
 
     if(current_packet_ptr > RX_BUF_SIZE)

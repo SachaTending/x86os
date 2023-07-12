@@ -80,22 +80,14 @@ void VMSVGA::Init() {
     f_info.height = svga_read_reg(SVGA_REG_HEIGHT);
     f_info.pitch = svga_read_reg(SVGA_REG_BYTES_PER_LINE);
     Graphics::Init(putpixel, &f_info);
-    #define a 20
-    for (int x=0;x<500;x++) {
-        for (int y=0;y<500;y++) {
-            Graphics::Square_Filled(x, y, x+a, y+a, 100);
-            svga_flush();
-            //for (int i=0;i<1;i++);
-            Graphics::Square_Filled(x, y, x+a, y+a, 0);
-        }
-    }
+    Graphics::Square_Filled(100, 30, 120, 50, 100);
 }
 void putpixel(int x, int y, int color) {
     while (svga_read_reg(SVGA_REG_BUSY)) {
         // Do nothing.
         break; //But who asked?
     }
-    uint32_t *where = fb_start;
+    uint32_t *where = fb_start + svga_read_reg(SVGA_REG_FB_OFFEST);
     int row = (y * pitch) / 4;
     where[row + x] = color;
     //if (color != 0)svga_flush();
