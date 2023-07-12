@@ -17,10 +17,9 @@ void Console::operator<<(char val) {
 void Console::operator<<(char *val) {
     printf("%s", val);
 }
-
 void test() {
     con << 123;
     con << " testing cpp\n";
-    con << 'this is a char, ';
+    con << "this is a const char *, ";
     con << (char *)"this is a char *\n";
 }
