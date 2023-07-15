@@ -27,36 +27,37 @@ struct ACPISDTHeader {
 RSDPDescriptor *rsdp;
 ACPISDTHeader *rsdt;
 
-uint8_t lapic_ids[256]={0}; // CPU core Local APIC IDs
-uint8_t numcore=0;          // number of cores detected
-uint64_t lapic_ptr=0;       // pointer to the Local APIC MMIO registers
-uint64_t ioapic_ptr=0;      // pointer to the IO APIC MMIO registers
+uint8_t lapic_ids[256] = {0};  // CPU core Local APIC IDs
+uint8_t numcore = 0;           // number of cores detected
+uint64_t lapic_ptr = 0;        // pointer to the Local APIC MMIO registers
+uint64_t ioapic_ptr = 0;       // pointer to the IO APIC MMIO registers
 
-static void detect_cores(uint8_t *rsdt)
-{
+void detect_cores(uint8_t *rsdt) {
     uint8_t *ptr, *ptr2;
     uint32_t len;
 
     // iterate on ACPI table pointers
-    for(len = *((uint32_t*)(rsdt + 4)), ptr2 = rsdt + 36; ptr2 < rsdt + len; ptr2 += rsdt[0]=='X' ? 8 : 4) {
-        ptr = (uint8_t*)(uintptr_t)(rsdt[0]=='X' ? *((uint64_t*)ptr2) : *((uint32_t*)ptr2));
-        if(!memcmp(ptr, (uint8_t *)"APIC", 4)) {
-        // found MADT
-        lapic_ptr = (uint64_t)(*((uint32_t *)(ptr+0x24)));
-        ptr2 = ptr + *((uint32_t*)(ptr + 4));
-        // iterate on variable length records
-        for(ptr += 44; ptr < ptr2; ptr += ptr[1]) {
-            log.info("%d %d\n", ptr, ptr[1]);
-            switch(ptr[0]) {
-            case 0: if(ptr[4] & 1) lapic_ids[numcore++] = ptr[3]; break; // found Processor Local APIC
-            case 1: ioapic_ptr = (uint64_t)*((uint32_t*)(ptr+4)); break;  // found IOAPIC
-            case 5: lapic_ptr = *((uint64_t*)(ptr+4)); break;             // found 64 bit LAPIC
+    for (len = *((uint32_t*)(rsdt + 4)), ptr2 = rsdt + 36; ptr2 < rsdt + len; ptr2 += rsdt[0] == 'X' ? 8 : 4) {
+        ptr = (uint8_t*)(uintptr_t)(rsdt[0] == 'X' ? *((uint64_t*)ptr2) : *((uint32_t*)ptr2));
+        if (!memcmp(ptr, (uint8_t *)"APIC", 4)) {
+            // found MADT
+            lapic_ptr = (uint64_t)(*((uint32_t*)(ptr + 0x24)));
+            ptr2 = ptr + *((uint32_t*)(ptr + 4));
+            break;
+            // iterate on variable length records
+            for (ptr += 44; ptr < ptr2; ptr += ptr[1]) {
+                if (ptr[1] > 0) {
+                    log.info("0x%x 0x%x %d\n", ptr, ptr2, ptr[0]);
+                }
+                switch (ptr[0]) {
+                    case 0: if (ptr[4] & 1) lapic_ids[numcore++] = ptr[3]; break; // found Processor Local APIC
+                    case 1: ioapic_ptr = (uint64_t)*((uint32_t*)(ptr + 4)); break;  // found IOAPIC
+                    case 5: lapic_ptr = *((uint64_t*)(ptr + 4)); break;             // found 64 bit LAPIC
+                }
             }
-        }
-        break;
+            break;
         }
     }
-    log.info("a\n");
 }
 
 static bool isChecksumValidRSDP(uint8_t* rsdp) {
@@ -105,5 +106,6 @@ void ACPI::Init() {
         log.info("Revision: %u\n", rsdp->Revision);
         rsdt = (ACPISDTHeader *)rsdp->RsdtAddress;
         log.info("OEMID(RSDT): %s\n", rsdt->OEMID);
+        detect_cores((uint8_t *)rsdt);
     }
 }
