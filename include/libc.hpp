@@ -27,9 +27,11 @@ typedef __builtin_va_list va_list;
 void *memcpy(void *dst, void const *src, int n);
 uint16_t *memsetw(uint16_t *dest, uint16_t val, uint32_t count);
 void *memset(void *dst,char val, int n);
+int memcmp(uint8_t * data1, uint8_t * data2, int n);
 
 int strcpy(char *dst,const char *src);
 int strlen(const char* str);
+int strcmp(const char *dst, char *src);
 
 int atoi(char * string);
 void itoa(char *buf, unsigned long int n, int base);

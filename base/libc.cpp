@@ -26,6 +26,16 @@ uint16_t *memsetw(uint16_t *dest, uint16_t val, uint32_t count)
     return dest;
 }
 
+int memcmp(uint8_t * data1, uint8_t * data2, int n) {
+    while(n--) {
+        if(*data1 != *data2)
+            return 0;
+        data1++;
+        data2++;
+    }
+    return 1;
+}
+
 int strcpy(char *dst,const char *src)
 {
     int i = 0;
@@ -40,6 +50,18 @@ int strlen(const char* str)
 	while (str[len])
 		len++;
 	return len;
+}
+
+int strcmp(const char *dst, char *src)
+{
+    int i = 0;
+
+    while ((dst[i] == src[i])) {
+        if (src[i++] == 0)
+            return 0;
+    }
+
+    return 1;
 }
 
 void itoa(char *buf, unsigned long int n, int base)

@@ -8,6 +8,7 @@
 #include <rtl8139.hpp>
 #include <mouse.hpp>
 #include <multiboot.h>
+#include <acpi.hpp>
 
 static Logging log("Kernel");
 
@@ -86,6 +87,7 @@ extern "C" void kernel_main(multiboot_info_t *m) {
 	} else {
 		log.info("Avaible memory: %u\n", avaible_size);
 	}
+	ACPI::Init();
 	log.info("Starting drivers...\n");
 	PCI::Init(); // Init pci
 	Timer::Init(); // Init timer
@@ -94,7 +96,7 @@ extern "C" void kernel_main(multiboot_info_t *m) {
 	kbd_init(); // Init keyboard.
 	Mouse::Init(); // Init mouse
 	asm volatile ("hlt");
-	test();
+	//test();
 	log.info("Init done!\n");
 	idle();
 }
