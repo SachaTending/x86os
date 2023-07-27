@@ -69,12 +69,12 @@ static void idt_handl(registers_t *regs) {
             y -= bytes[2];
             if (x < 0) x = 0;
             if (y < 0) y = 0;
-            if (fb_info->width != 0) {
+            if (((int)fb_info) != 0) {
                 if ((y + csize) > fb_info->height) y = fb_info->height - csize;
                 if ((x + csize) > fb_info->width) x = fb_info->width - csize;
             }
             iter = 0;
-            if (fb_info->width != 0) {
+            if (((int)fb_info) != 0) {
                 if (not MOUSE_LEFT_BUTTON(bytes[0]))Graphics::Square_Filled(old_x, old_y, old_x+csize, old_y+csize, 0);
                 if (MOUSE_RIGHT_BUTTON(bytes[0])) csize-=10;
                 else if (MOUSE_MIDDLE_BUTTON(bytes[0])) csize+=10;

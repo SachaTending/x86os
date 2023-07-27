@@ -1,5 +1,5 @@
 #pragma once
-#include <stdint.h>
+#include "stdint.h"
 
 typedef union pci_dev {
     uint32_t bits;

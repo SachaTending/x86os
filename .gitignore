@@ -1,2 +1,4 @@
 *.o
 /kernel.elf
+/.vscode
+.vscode/c_cpp_properties.json

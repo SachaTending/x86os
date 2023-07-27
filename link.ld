@@ -29,6 +29,7 @@ SECTIONS
 	.data BLOCK(4K) : ALIGN(4K)
 	{
 		start_ctors = .;
+		KEEP(*( .ctors ));
     	KEEP(*( .init_array ));
     	KEEP(*(SORT_BY_INIT_PRIORITY( .init_array.* )));
     	end_ctors = .;

@@ -10,10 +10,17 @@ OBJ =
 
 -include targets/*.mk
 
+ifeq ($(OS),Windows_NT)
+is_win = yes
+endif
+ifeq (FORCE_NOWIN,yes)
+is_win = no
+endif
+
 all: kernel
 .PHONY: kernel
 kernel: $(OBJ)
-ifeq ($(OS),Windows_NT)
+ifeq (is_win,yes)
 	@echo "  [LD]   kernel.exe(temporary)"
 	@ld -A i386 -T link.ld -o kernel.exe -m i386pe $(OBJ)
 	@echo "Generating kernel..."

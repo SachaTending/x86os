@@ -111,5 +111,6 @@ void VMSVGA::SetMode(uint32_t w, uint32_t h, uint32_t bpp) {
     f_info.height = svga_read_reg(SVGA_REG_HEIGHT);
     f_info.pitch = svga_read_reg(SVGA_REG_BYTES_PER_LINE);
     fb_start = (uint32_t *)svga_read_reg(SVGA_REG_FB_START);
+    fb_start += svga_read_reg(SVGA_REG_FB_OFFEST);
     pitch = svga_read_reg(SVGA_REG_BYTES_PER_LINE);
 }

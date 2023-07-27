@@ -299,9 +299,13 @@ int is_transmit_empty() {
 }
 
 void write_serial(char a) {
-   while (is_transmit_empty() == 0);
+    while (is_transmit_empty() == 0);
 
-   outb(PORT,a);
+    outb(PORT,a);
+    if (a == '\n') {
+        while (is_transmit_empty() == 0);
+        outb(PORT, '\r');
+    }
 }
 void print_char(char c) {
     if (serial_ready == false) {
