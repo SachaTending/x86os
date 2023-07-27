@@ -10,7 +10,6 @@
                 "${workspaceFolder}/include"
             ],
             "defines": [],
-            "compilerPath": "C:\\Users\\Таня\\Desktop\\env\\bin\\gcc.exe",
             "cStandard": "c17",
             "cppStandard": "c++14",
             "intelliSenseMode": "gcc-x86"
