@@ -1,6 +1,7 @@
 #include <libc.hpp>
 #include <terminal.hpp>
 #include <io.h>
+#include <stddef.h>
 // Code by szhou32
 void *memcpy(void *dst, void const *src, int n)
 {
@@ -17,6 +18,15 @@ void *memset(void *dst,char val, int n)
     char *temp = (char *)dst;
     for(;n != 0; n--) *temp++ = val;
     return dst;
+}
+
+extern "C" {
+    void *flanterm_memset(void *dst, int v, size_t n) {
+        return memset(dst, (char)v, (int)n);
+    }
+    void *flanterm_memcpy(void *dst, void const *src, size_t n) {
+        return memcpy(dst, src, n);
+    }
 }
 
 uint16_t *memsetw(uint16_t *dest, uint16_t val, uint32_t count)
@@ -307,6 +317,7 @@ void write_serial(char a) {
         outb(PORT, '\r');
     }
 }
+void gui_putchar(char c);
 void print_char(char c) {
     if (serial_ready == false) {
         init_serial();
@@ -314,6 +325,7 @@ void print_char(char c) {
     }
     Terminal::PutChar(c);
     write_serial(c);
+    gui_putchar(c);
 }
 void printf(const char * s, ...) {
     va_list ap;

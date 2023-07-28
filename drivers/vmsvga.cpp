@@ -38,6 +38,7 @@ static fbinfo_t f_info;
 void putpixel(int x, int y, int color);
 void svga_flush();
 extern bool terminal_disabled;
+extern void gui_print(const char *text);
 void VMSVGA::Init() {
     log.info("Starting...\n");
     svga_dev = PCI::Get(0x15AD, 0x0405, -1);
@@ -81,6 +82,7 @@ void VMSVGA::Init() {
     f_info.pitch = svga_read_reg(SVGA_REG_BYTES_PER_LINE);
     Graphics::Init(putpixel, &f_info);
     Graphics::Square_Filled(100, 30, 120, 50, 100);
+    gui_print("bruh 123\n123\nbruh 123 bruh bruh");
 }
 void putpixel(int x, int y, int color) {
     while (svga_read_reg(SVGA_REG_BUSY)) {

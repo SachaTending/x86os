@@ -124,12 +124,14 @@ struct flanterm_context *flanterm_fb_init(
 );
 
 #ifndef FLANTERM_FB_DISABLE_BUMP_ALLOC
+void * malloc(size_t size);
+void flanterm_free(void *mem, size_t bruh);
 static inline struct flanterm_context *flanterm_fb_simple_init(
     uint32_t *framebuffer, size_t width, size_t height, size_t pitch
 ) {
     return flanterm_fb_init(
-        NULL,
-        NULL,
+        malloc,
+        flanterm_free,
         framebuffer, width, height, pitch,
 #ifndef FLANTERM_FB_DISABLE_CANVAS
         NULL,

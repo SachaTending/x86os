@@ -2584,7 +2584,7 @@ uint8_t * get_font_array()
 
     return (uint8_t *)(&font);
 }
-
+extern int screen_x, screen_y;
 void draw_text(char * text, int start_x, int start_y) {
     uint32_t i, x, y, col, row, stop;
     uint8_t *fnt, chr;

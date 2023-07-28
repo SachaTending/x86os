@@ -29,8 +29,11 @@
 #include "flanterm.h"
 #include "fb2.h"
 
-void *memset(void *, int, size_t);
-void *memcpy(void *, const void *, size_t);
+void *flanterm_memset(void *, int, size_t);
+void *flanterm_memcpy(void *, const void *, size_t);
+
+#define memset flanterm_memset
+#define memcpy flanterm_memcpy
 
 #ifndef FLANTERM_FB_DISABLE_BUMP_ALLOC
 

@@ -11,6 +11,7 @@
 #include <acpi.hpp>
 #include <int32.h>
 #include <libc.hpp>
+#include <malloc.hpp>
 
 static Logging log("Kernel");
 
@@ -24,7 +25,7 @@ struct VbeInfoBlock {
    uint16_t VbeVersion;              // == 0x0300 for VBE 3.0
    uint16_t OemStringPtr[2];         // isa vbeFarPtr
    uint8_t  Capabilities[4];
-   uint16_t VideoModePtr[2];         // isa vbeFarPtr
+   uint16_t VideoModePtr[2];        // isa vbeFarPtr
    uint16_t TotalMemory;             // as # of 64KB blocks
    uint8_t  Reserved[492];
 } __attribute__((packed));
@@ -84,15 +85,37 @@ void int32_test()
     int32(0x10, &regs);
 }
 
+typedef struct vbe_info {
+   char signature[4];   // must be "VESA" to indicate valid VBE support
+   uint16_t version;         // VBE version; high byte is major version, low byte is minor version
+   uint32_t oem;         // segment:offset pointer to OEM
+   uint32_t capabilities;      // bitfield that describes card capabilities
+   uint32_t video_modes;      // segment:offset pointer to list of supported video modes
+   uint16_t video_memory;      // amount of video memory in 64KB blocks
+   uint16_t software_rev;      // software revision
+   uint32_t vendor;         // segment:offset to card vendor string
+   uint32_t product_name;      // segment:offset to card model name
+   uint32_t product_rev;      // segment:offset pointer to product revision
+   char reserved[222];      // reserved for future expansion
+   char oem_data[256];      // OEM BIOSes store their strings in this area
+}__attribute__ ((packed)) vbe_info_t ;
+
 void vesa_test() {
 	VbeInfoBlock *vbe = (VbeInfoBlock *)0x7c000;
+	vbe_info_t *vbe2 = (vbe_info_t *)0x7c000;
 	regs16_t regs;
 	regs.es = seg(vbe);
 	regs.di = off(vbe);
 	regs.ax = 0x4f00;
+	strcpy((char *)&(vbe2->signature), "VBE2");
 	int32(0x10, &regs);
-	log.info("oem: %s\n", (char *)desegment(vbe->OemStringPtr[0], vbe->OemStringPtr[1]));
-	log.info("0x%x(%d) 0x%x(%d) 0x%x(%d)\n", vbe->OemStringPtr[0], vbe->OemStringPtr[0], vbe->OemStringPtr[1], vbe->OemStringPtr[1], desegment(vbe->OemStringPtr[0], vbe->OemStringPtr[1]));
+	//log.info("oem: %s\n", (char *)vbe2->oem);
+	log.info("0x%x\n", vbe2->oem);
+	log.info("mode_list: 0x%x\n", desegment(vbe->VideoModePtr[0], vbe->VideoModePtr[1]));
+	uint16_t *mode_list = (uint16_t *)desegment(vbe->VideoModePtr[0], vbe->VideoModePtr[1]);
+	for (int i=0;mode_list[i] != 0xFFFF; i++) {
+		log.info("mode: 0x%x\n", mode_list[i]);
+	}
 	
 }
 
@@ -128,6 +151,10 @@ void memmap_print() {
 
 extern "C" void kernel_main(multiboot_info_t *m) {
 	mbi = m;
+	regs16_t r;
+	r.ax = 0x4F02;
+	r.bx = 0x010C;
+	int32(0x10, &r);
 	Terminal::Init();
 	callConstructors(); // Needed by logging system.
 	log.info("Starting...\n");
@@ -139,12 +166,13 @@ extern "C" void kernel_main(multiboot_info_t *m) {
 	log.info("Memory map length: %u\n", mbi->mmap_length);
 	//vesa_test();
 	//int32_test();
-	memmap_print();
+	//memmap_print();
+	pmm_init();
 	ACPI::Init();
 	log.info("Starting drivers...\n");
 	PCI::Init(); // Init pci
 	Timer::Init(); // Init timer
-	VMSVGA::Init(); // Init vmsvga
+	//VMSVGA::Init(); // Init vmsvga
 	RTL8139::Init(); // Init rtl8139
 	kbd_init(); // Init keyboard.
 	Mouse::Init(); // Init mouse

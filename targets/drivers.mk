@@ -1,4 +1,4 @@
-OBJ += drivers/terminal.o drivers/flanterm/flanterm.o
+OBJ += drivers/terminal.o drivers/flanterm/flanterm.o drivers/flanterm/fb.o
 OBJ += drivers/timer.o
 OBJ += drivers/vmsvga.o drivers/graphics.o
 OBJ += drivers/pci.o
