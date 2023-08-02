@@ -323,7 +323,7 @@ void print_char(char c) {
         init_serial();
         serial_ready = true;
     }
-    Terminal::PutChar(c);
+    //Terminal::PutChar(c);
     write_serial(c);
     gui_putchar(c);
 }

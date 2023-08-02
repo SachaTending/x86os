@@ -7,7 +7,7 @@
 static Logging log("Memory");
 
 extern multiboot_info_t *mbi;
-extern int kernel_start;
+extern int kernel_start, kernel_end;
 const char * mmap_type_to_string(multiboot_uint32_t type);
 
 static int alloc_id;
@@ -23,6 +23,10 @@ struct alloc_struct
 };
 
 multiboot_mmap_entry big_entry;
+
+void big_entry_print() {
+    log.info("Big entry: addr=0x%x len=%d\n", big_entry.addr, big_entry.len);
+}
 
 void pmm_init() {
     // Parse memmap
@@ -41,15 +45,18 @@ void pmm_init() {
                 (unsigned) (mmap->len & 0xffffffff),
                 mmap_type_to_string(mmap->type));
         if (mmap->type == MULTIBOOT_MEMORY_AVAILABLE) {
-            if (mmap->size > big_entry.size && mmap->addr != kernel_start) {
-                big_entry.addr = mmap->addr;
+            if (mmap->size > big_entry.size) {
+                if (mmap->addr == kernel_start) {
+                    big_entry.addr = kernel_end;
+                }
+                else big_entry.addr = mmap->addr;
                 big_entry.len = mmap->len;
                 big_entry.size = mmap->size;
                 big_entry.type = mmap->type;
             }
         }
     }
-    log.info("Big entry: addr=0x%x len=%d\n", big_entry.addr, big_entry.len);
+    big_entry_print();
     alloc_struct *d = (alloc_struct *)big_entry.addr;
     d->allocated = false;
     d->next = d;

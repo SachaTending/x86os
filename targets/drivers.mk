@@ -5,3 +5,4 @@ OBJ += drivers/pci.o
 OBJ += drivers/kbd.o drivers/mouse.o
 OBJ += drivers/rtl8139.o
 OBJ += drivers/libstdcxx.o
+OBJ += drivers/ahci.o

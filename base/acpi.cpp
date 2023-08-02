@@ -99,13 +99,25 @@ bool ACPI::FindRSDP() {
     return false;
 }
 
+bool g_ACER = false;
+
 void ACPI::Init() {
     log.info("Searching RSDP...\n");
     if (ACPI::FindRSDP()) {
-        log.info("OEMID: %s\n", rsdp->OEMID);
+        log.info("OEMID: ");
+        for (int i=0;i<sizeof(rsdp->OEMID);i++) {
+            printf("%c", rsdp->OEMID[i]);
+        } printf("\n");
+        if (!strcmp("ACR", (char *)&rsdt->OEMID)) 
+        {
+            g_ACER = true;
+            log.info("Detected OEM: Acer\n");
+        }
         log.info("Revision: %u\n", rsdp->Revision);
         rsdt = (ACPISDTHeader *)rsdp->RsdtAddress;
-        log.info("OEMID(RSDT): %s\n", rsdt->OEMID);
+        log.info("OEMID(RSDT): ");
+        for (int i=0;i<sizeof(rsdt->OEMID);i++) printf("%c", rsdt->OEMID[i]);
+        printf("\n");
         detect_cores((uint8_t *)rsdt);
     }
 }

@@ -12,6 +12,7 @@
 #include <int32.h>
 #include <libc.hpp>
 #include <malloc.hpp>
+#include <ahci.hpp>
 
 static Logging log("Kernel");
 
@@ -118,7 +119,7 @@ void vesa_test() {
 	}
 	
 }
-
+void big_entry_print();
 void memmap_print() {
 	multiboot_memory_map_t *mmap;
 	unsigned avaible_size = 0;
@@ -147,8 +148,10 @@ void memmap_print() {
 	} else {
 		log.info("Avaible memory: %u\n", avaible_size);
 	}
+	big_entry_print();
 }
-
+void vesa_set();
+void sched_start();
 extern "C" void kernel_main(multiboot_info_t *m) {
 	mbi = m;
 	regs16_t r;
@@ -168,16 +171,21 @@ extern "C" void kernel_main(multiboot_info_t *m) {
 	//int32_test();
 	//memmap_print();
 	pmm_init();
+	vesa_set();
 	ACPI::Init();
 	log.info("Starting drivers...\n");
 	PCI::Init(); // Init pci
 	Timer::Init(); // Init timer
+	//AHCI::Init(); // Init AHCI
 	//VMSVGA::Init(); // Init vmsvga
-	RTL8139::Init(); // Init rtl8139
+	//RTL8139::Init(); // Init rtl8139
 	kbd_init(); // Init keyboard.
-	Mouse::Init(); // Init mouse
+	//Mouse::Init(); // Init mouse
+	//for (;;);
 	asm volatile ("hlt");
-	//test();
+	test();
 	log.info("Init done!\n");
+	sched_start();
+	for (;;);
 	idle();
 }

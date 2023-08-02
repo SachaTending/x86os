@@ -1,5 +1,10 @@
 #include <pci.hpp>
 #include <io.h>
+#include <logging.hpp>
+#include <libc.hpp>
+#include <pci_ven_db.h>
+
+static Logging log("PCI");
 
 uint32_t pci_size_map[100];
 
@@ -132,6 +137,37 @@ void PCI::BusMasterEnable(pci_dev_t dev) {
         PCI::Write(dev, PCI_COMMAND, pci_command_reg);
     }
 }
+extern bool g_ACER;
+const char *venID_to_string(uint32_t venID) {
+	if (venID == 0x1234 or g_ACER) {
+		return "idk";
+	}
+	for (int i=0;i<sizeof(pci_db);i++) {
+		//printf("0x%x 0x%x\n", i, venID);
+		if (pci_db[i].vid == venID) {
+			if (strlen(pci_db[i].name) > 64) return "Too long company name.";
+			return pci_db[i].name;
+		}
+	}
+}
+
+const char *pci_class_to_str(uint32_t class2, uint32_t subclass) {
+	switch (class2)
+	{
+		case 0x01:
+			switch (subclass)
+			{
+				case 0x06:
+					return "AHCI Controller";
+				
+				default:
+					return "Mass storage - other";
+			}
+		
+		default:
+			return "Unknown or not defined.";
+	}
+}
 
 void PCI::Init() {
     // Init size map
@@ -153,4 +189,22 @@ void PCI::Init() {
 	pci_size_map[PCI_BAR5] = 4;
 	pci_size_map[PCI_INTERRUPT_LINE]	= 1;
 	pci_size_map[PCI_SECONDARY_BUS]		= 1;
+	pci_dev_t dev = {0};
+	dev.bus_num = 0;
+	dev.device_num = 0;
+	dev.function_num = 0;
+	for (dev.bus_num = 0; dev.bus_num < 31; dev.bus_num++) {
+		for (dev.device_num = 0; dev.device_num < 31; dev.device_num++) {
+			for (dev.function_num = 0; dev.function_num < 7; dev.function_num++) {
+				if (PCI::Read(dev, PCI_VENDOR_ID) != 0xffff) {
+					log.info("bus=%u dev=%u func=%u venID=0x%04x(%s) devID=0x%04x class=0x%01x", dev.bus_num, dev.device_num, dev.function_num, PCI::Read(dev, PCI_VENDOR_ID), venID_to_string(PCI::Read(dev, PCI_VENDOR_ID)), PCI::Read(dev, PCI_DEVICE_ID), PCI::Read(dev, PCI_CLASS));
+					if (PCI::Read(dev, PCI_SUBCLASS) != 128) {
+						printf(" subclass=0x%x", PCI::Read(dev, PCI_SUBCLASS));
+						if (!(strlen(pci_class_to_str(PCI::Read(dev, PCI_CLASS), PCI::Read(dev, PCI_SUBCLASS))) > 30)) printf(" type=%s", pci_class_to_str(PCI::Read(dev, PCI_CLASS), PCI::Read(dev, PCI_SUBCLASS)));
+					}
+					printf("\n");
+				}
+			}
+		}
+	}
 }
