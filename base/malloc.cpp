@@ -28,10 +28,16 @@ void big_entry_print() {
     log.info("Big entry: addr=0x%x len=%d\n", big_entry.addr, big_entry.len);
 }
 
+void no_big_entry() {
+    big_entry.addr = (uint32_t)&kernel_end;
+    big_entry.len = 1024*1024*1024;
+}
+
 void pmm_init() {
     // Parse memmap
     log.info("Parsing memmap...\n");
     multiboot_memory_map_t *mmap;
+    goto no;
 	for (mmap = (multiboot_memory_map_t *) mbi->mmap_addr;
            (unsigned long) mmap < mbi->mmap_addr + mbi->mmap_length;
            mmap = (multiboot_memory_map_t *) ((unsigned long) mmap
@@ -45,9 +51,10 @@ void pmm_init() {
                 (unsigned) (mmap->len & 0xffffffff),
                 mmap_type_to_string(mmap->type));
         if (mmap->type == MULTIBOOT_MEMORY_AVAILABLE) {
+            log.info("addr 0x%x krnl: 0x%x\n", mmap->addr, (uint64_t)&kernel_start);
             if (mmap->size > big_entry.size) {
-                if (mmap->addr == kernel_start) {
-                    big_entry.addr = kernel_end;
+                if (mmap->addr == (uint64_t)&kernel_start) {
+                    big_entry.addr = (uint64_t)&kernel_end;
                 }
                 else big_entry.addr = mmap->addr;
                 big_entry.len = mmap->len;
@@ -56,6 +63,8 @@ void pmm_init() {
             }
         }
     }
+no:
+    no_big_entry();
     big_entry_print();
     alloc_struct *d = (alloc_struct *)big_entry.addr;
     d->allocated = false;
@@ -79,7 +88,7 @@ void debug_null(const char *m, ...) {
 
 }
 
-#define debug debug_null
+#define debug log.info
 
 
 extern "C" {
@@ -109,6 +118,7 @@ extern "C" {
                     return (void *)-1;
                 } else {
                     // Allocate space
+                    debug("Allocating block at 0x%x size %d...\n", d, size);
                     d->allocated = true;
                     d->prev = prev;
                     prev->next = d;
@@ -120,6 +130,8 @@ extern "C" {
                 }
             }
         }
+        debug("No free block found.\n");
+        return (void *)-1;
     }
     void free(void *mem) {
         alloc_struct *d= (alloc_struct *)(mem - sizeof(alloc_struct));

@@ -11,6 +11,7 @@ typedef struct task {
     uint32_t esp;
     uint32_t ebp;
     task *next;
+    registers_t regs;
 } task_t;
 
 task_t *current, *root_task;
@@ -29,35 +30,60 @@ void task2() {
 void task3() {
     while (1) printf("task3\n");
 }
-
+extern "C" void perform_task_switch(uint32_t, uint32_t, uint32_t, uint32_t);
+bool task_is_switching = false;
+uint32_t esp_task_switch[32];
+void task_switch() {
+    if (current->esp == 0) {
+        current->esp = (uint32_t)malloc(16384)+16384;
+    }
+    printf("esp: 0x%x\n", current->esp);
+    task_is_switching = false;
+    perform_task_switch(current->eip, 0, current->ebp, current->esp);
+}
+bool task_switch2 = false;
 void timer_idt(registers_t *regs) {
     timer_tick++;
-    if (schedule && timer_tick % 15) {
+    if (schedule && task_is_switching == false) {
         task_t *prev = current;
+        if (prev->next == current) return;
         current = prev->next;
         // Save registers
-        prev->eip = regs->eip;
-        prev->esp = regs->esp;
-        prev->ebp = regs->ebp;
+        if (task_switch2) {
+            regs->eip = regs->eip;
+            prev->esp = regs->esp;
+            prev->ebp = regs->ebp;
+        }
+        else {
+            task_switch2 = true;
+            //printf("a\n");
+        }
         // Load new registers
+        //perform_task_switch(current->eip, current->ebp, current->esp);
         regs->eip = current->eip;
-        regs->ebp = current->ebp;
         regs->esp = current->esp;
+        regs->ebp = current->ebp;
+        //printf("eip: old: 0x%u new: 0x%u\n", prev->eip, current->eip);
+        //printf("esp: old: 0x%x new: 0x%x\n", prev->eip, current->eip);
+        //printf("name: old %s new %s\n", prev->name, current->name);
+        //printf("regs: eip: 0x%x ebp: 0x%x esp: 0x%x\n", regs->eip, regs->ebp, regs->esp);
     }
 }
 
 void new_task(void(*task_func)(), const char *name) {
     task_t *new_task = (task_t *)malloc(sizeof(task_t));
-    new_task->esp = (uint32_t)malloc(16384);
+    //new_task->esp = (uint32_t)malloc(16384);
     new_task->eip = (uint32_t)task_func;
     new_task->ebp = 0;
     new_task->name = name;
     new_task->next = root_task;
     task_t *t = root_task;
-    for (int i=0;i<tasks;i++) {
+    while (t->next != root_task) {
         t = t->next;
     }
     t->next = new_task;
+    next_pid++;
+    tasks++;
 }
 
 void sched_start() {

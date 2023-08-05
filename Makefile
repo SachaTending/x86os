@@ -3,7 +3,7 @@ CC = gcc
 LD = ld
 NASM = nasm
 
-CFLAGS = -I include -m32 -fno-leading-underscore -march=i386 -ffreestanding -O2 -Wall -Wextra -fno-exceptions -fno-rtti -fno-stack-protector -fpermissive -fno-stack-check -c -g
+CFLAGS = -I include -m32 -fno-leading-underscore -march=i386 -ffreestanding -O2 -Wall -Wextra -fno-rtti -fno-stack-protector -fpermissive -fno-stack-check -c -g
 LDFLAGS = -melf_i386 -A i386 -T link.ld
 
 OBJ = 
