@@ -8,7 +8,7 @@ extern int timer_tick;
 Logging::Logging(const char *log_name) {
     this->log_name = log_name;
 }
-void print_char(char c);
+extern "C" void print_char(char c);
 void Logging::info(const char *text, ...) {
     printf("[%s][%d][INFO]: ", this->log_name, timer_tick);
     va_list ap;

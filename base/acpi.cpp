@@ -116,7 +116,7 @@ void ACPI::Init() {
         log.info("Revision: %u\n", rsdp->Revision);
         rsdt = (ACPISDTHeader *)rsdp->RsdtAddress;
         log.info("OEMID(RSDT): ");
-        for (int i=0;i<sizeof(rsdt->OEMID);i++) printf("%c", rsdt->OEMID[i]);
+        for (int i=0;i<6;i++) printf("%c", rsdt->OEMID[i]);
         printf("\n");
         detect_cores((uint8_t *)rsdt);
     }

@@ -24,8 +24,21 @@ IRQ  13,    45
 IRQ  14,    46
 IRQ  15,    47
 
-        
-; C function in idt.c
+%assign i 0 
+%rep    32 
+    IRQ e%+i, i ; use DQ instead if targeting 64-bit
+%assign i i+1 
+%endrep
+
+global isr_stub_table
+isr_stub_table:
+%assign i 0 
+%rep    32 
+    dd irqe%+i ; use DQ instead if targeting 64-bit
+%assign i i+1 
+%endrep
+
+; C function in idt.cpp
 extern irq_handler
 
 global irq_common_stub:function irq_common_stub.end-irq_common_stub

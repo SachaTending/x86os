@@ -23,7 +23,9 @@ typedef __builtin_va_list va_list;
 #define NULL 0
 #endif
 
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 void *memcpy(void *dst, void const *src, int n);
 uint16_t *memsetw(uint16_t *dest, uint16_t val, uint32_t count);
 void *memset(void *dst,char val, int n);
@@ -42,3 +44,6 @@ int isprint(char c);
 void vsprintf(char * str, void (*putchar)(char), const char * format, va_list arg);
 void vsprintf_helper(char * str, void (*putchar)(char), const char * format, uint32_t * pos, va_list arg);
 void printf(const char * s, ...);
+#ifdef __cplusplus
+}
+#endif

@@ -88,7 +88,7 @@ void debug_null(const char *m, ...) {
 
 }
 
-#define debug log.info
+#define debug debug_null
 
 
 extern "C" {

@@ -4,8 +4,9 @@
 #include <int32.h>
 #include <graphics.hpp>
 #include <libc.hpp>
-#include <flanterm.h>
 #include <fb2.h>
+#include <common.h>
+#include <malloc.hpp>
 
 char kbdus[128] = {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8', /* 9 */
@@ -48,7 +49,6 @@ char kbdus[128] = {
 char buf[1024];
 int buf_loc = 0;
 
-flanterm_context *ctx;
 
 void cls_buff() {
     for (int i=0;i<1024;i++) {
@@ -117,7 +117,7 @@ static void putpixel( int x,int y, int color) {
 }
 void draw_text(char * text, int start_x, int start_y);
 
-void gui_draw(const char *text, int x, int y) {
+void gui_draw(const char *text, int y) {
     int len = strlen(text);
     for (int i=0;i<len;i++) {
         draw_text((char *)&(text[i]), i*8, y);
@@ -134,7 +134,7 @@ unsigned short mode;
 uint16_t find_mode(int x, int y, int bpp) {
 	terminal_disabled = true;
 	regs16_t r;
-	uint16_t mode2;
+	uint16_t mode2 = 0;
 	while (mode2 != 0xffff) {
 		r.ax = 0x4F01;
         r.cx = mode2;
@@ -148,7 +148,9 @@ uint16_t find_mode(int x, int y, int bpp) {
 				printf("0x%x: width: %u height: %u bpp: %u\n", mode2, mode_info->width, mode_info->height, mode_info->bpp);
 				mode = mode2;
 				return mode2;
-			}
+			} else {
+                printf("0x%x: width: %u height: %u bpp: %u\n", mode2, mode_info->width, mode_info->height, mode_info->bpp);
+            }
 		}
 		memset(&r, 0, sizeof(regs16_t));
 		mode2++;
@@ -164,7 +166,24 @@ void putchar_psf(
     int cx, int cy,
     /* foreground and background colors, say 0xFFFFFF and 0x000000 */
     uint32_t fg, uint32_t bg);
+
+#define ARGB(a, r, g, b) (a << 24) | ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF)
+
+static void scroll() {
+    if (screen_y + fy > mode_info->height) {
+        screen_x = 0;
+        screen_y = 0;
+        memcpy((void *)mode_info->framebuffer, (const void *)&(&mode_info->framebuffer)[1023*767*mode_info->pitch], mode_info->pitch*768);
+    }
+}
+
+uint32_t fg = 0xffffffff;
+uint32_t bg = 0;
 void gui_putchar(char c) {
+    fg = 0xffffff;
+    if (c == '\r') {
+        goto end;
+    }
     if (!in_vesa) return;
     if (c == '\n') {
         screen_y += fy;
@@ -175,17 +194,27 @@ void gui_putchar(char c) {
         screen_y += fy;
         screen_x = 0;
     }
-    if (screen_y + fy > mode_info->height) {
-        screen_x = 0;
-        screen_y = 0;
-    }
+    scroll();
     //draw_text(&c, screen_x, screen_y);
-    putchar_psf(c, screen_x, screen_y, 0xffffffff, 0x0);
+    putchar_psf(c, screen_x, screen_y, fg,bg);
     screen_x += fx;
 end:
     return;
 }
-
+void fill_bg(uint32_t bg2) {
+    // Fill background but dont touch existing colors
+    //uintptr_t size = mode_info->banks*mode_info->bank_size;
+    //printf("%u\n", size);
+    for (int x=0;x<mode_info->width;x++) {
+        for (int y=0;y<mode_info->height;y++) {
+            unsigned where = x + y * (mode_info->pitch / sizeof(uint32_t));
+            if (vram[where] == 0) {
+                vram[where] = bg2;
+            }
+        }
+    }
+    bg = bg2;
+}
 extern uint8_t builtin_font[];
 
 void gui_print(const char *text) {
@@ -221,10 +250,6 @@ void cls() {
     screen_y = 0;
 }
 
-void vesa_modes() {
-    regs16_t r;
-
-}
 const char msg[] = "Hello world\n";
 void psf_init();
 
@@ -256,7 +281,7 @@ void vesa_set() {
             finfo.width = mode_info->width;
             finfo.pitch = mode_info->pitch;
             Graphics::Init(putpixel, &finfo);
-			putchar_psf('>', 1, 1, 0xffffffff, 0x0);
+			//putchar_psf('>', 1, 1, 0xffffffff, 0x0);
             vram = (uint32_t *)mode_info->framebuffer;
             //Graphics::Square_Filled(100, 100, 150, 150, 123);
             printf("%dx%dx%d\n", mode_info->width, mode_info->height, mode_info->bpp);
@@ -265,6 +290,33 @@ void vesa_set() {
     } else {
         printf("err 0x%x\n", r.ax);
     }
+}
+#define IS_CMD(cmd) !strcmp(cmd, (char *)&buf)
+
+void modes() {
+    vbe_mode_info_structure *v = (vbe_mode_info_structure *)0x3;
+    //memcpy(&v, mode_info, sizeof(vbe_mode_info_structure));
+    uint16_t i = 0x5;
+    return;
+    while (i != 0x0fff)
+    {
+        //printf("%d\n", i);
+        regs16_t r;
+        memset(&r, 0, sizeof(regs16_t));
+        r.ax = 0x4F01;
+        r.cx = i;
+        r.es = seg(v);
+        r.di = off(v);
+        int32(0x10, &r);
+        if (r.ax == 0x004F) {
+            printf("0x%04x: %ux%ux%u\n", i, v->width, v->height, v->bpp);
+        }
+        else {
+            printf("0x%04x: Not supported\n", mode);
+        }
+        i++;
+    }
+    //memcpy(mode_info, &v, sizeof(vbe_mode_info_structure));
 }
 
 void kbd_int(registers_t *regs) {
@@ -277,16 +329,29 @@ void kbd_int(registers_t *regs) {
         printf("%c", c);
         if (c == '\n') {
             // Handle commands
-            if (!strcmp("vesa", (char *)&buf)) {
+            if (IS_CMD("vesa")) {
                 vesa_test();
-            } else if (!strcmp("memmap", (char *)&buf)) {
+            } else if (IS_CMD("memmap")) {
                 memmap_print();
-            } else if (!strcmp("set", (char *)&buf)) {
+            } else if (IS_CMD("set")) {
                 vesa_set();
-            } else if (!strcmp("info", (char *)&buf)) {
+            } else if (IS_CMD("info")) {
                 vesa_info();
-            } else if (!strcmp("cls", (char *)&buf)) {
+            } else if (IS_CMD("cls")) {
                 cls();
+            } else if (IS_CMD("help")) {
+                printf("Avaible commands:\n");
+                printf("cls - Clears screen\n");
+                printf("vesa - [Not works in graphics mode] Tests vesa\n");
+                printf("set - Sets mode to graphics\n");
+                printf("help - This command\n");
+                printf("info - Prints vesa info\n");
+                printf("crash - crashes kernel\n");
+                printf("modes - list vesa modes\n");
+            } else if (IS_CMD("crash")) {
+                CRASH("CMD_CRASH\n");
+            } else if (IS_CMD("modes")) {
+                modes();
             }
             cls_buff();
         } else {

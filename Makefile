@@ -8,8 +8,6 @@ LDFLAGS = -melf_i386 -A i386 -T link.ld
 
 OBJ = 
 
--include targets/*.mk
-
 ifeq ($(OS),Windows_NT)
 is_win = yes
 endif
@@ -18,6 +16,7 @@ is_win = no
 endif
 
 all: kernel
+-include targets/*.mk
 .PHONY: kernel
 kernel: $(OBJ)
 ifeq (is_win,yes)
@@ -42,7 +41,7 @@ endif
 
 %.o: %.asm
 	@echo "  [NASM] $@"
-	@$(NASM) -felf32 -o $@ $<
+	@$(NASM) -felf32 -o $@ $< -g
 
 clean:
 ifeq ($(OS),Windows_NT)

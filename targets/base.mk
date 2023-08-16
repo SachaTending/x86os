@@ -6,3 +6,5 @@ OBJ += base/acpi.o
 OBJ += base/int32_2.o
 OBJ += base/text_draw.o
 OBJ += base/malloc.o
+OBJ += base/bios32.o
+OBJ += base/crash.o

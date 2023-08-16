@@ -3,6 +3,8 @@
 #include <io.h>
 #include <stddef.h>
 // Code by szhou32
+void gui_putchar(char c);
+extern "C" {
 void *memcpy(void *dst, void const *src, int n)
 {
     char * ret = (char *)dst;
@@ -317,7 +319,7 @@ void write_serial(char a) {
         outb(PORT, '\r');
     }
 }
-void gui_putchar(char c);
+
 void print_char(char c) {
     if (serial_ready == false) {
         init_serial();
@@ -332,4 +334,49 @@ void printf(const char * s, ...) {
     va_start(ap, s);
     vsprintf(NULL, print_char, s, ap);
     va_end(ap);
+}
+int strncmp( const char* s1, const char* s2, int c ) {
+    int result = 0;
+
+    while ( c ) {
+        result = *s1 - *s2++;
+
+        if ( ( result != 0 ) || ( *s1++ == 0 ) ) {
+            break;
+        }
+
+        c--;
+    }
+
+    return result;
+}
+
+char *strncpy(char *destString, const char *sourceString,int maxLength)
+{
+    unsigned count;
+
+    if ((destString == (char *) NULL) || (sourceString == (char *) NULL))
+    {
+        return (destString = NULL);
+    }
+
+    if (maxLength > 255)
+        maxLength = 255;
+
+    for (count = 0; (int)count < (int)maxLength; count ++)
+    {
+        destString[count] = sourceString[count];
+
+        if (sourceString[count] == '\0')
+            break;
+    }
+
+    if (count >= 255)
+    {
+        return (destString = NULL);
+    }
+
+    return (destString);
+}
+
 }

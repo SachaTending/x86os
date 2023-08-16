@@ -27,7 +27,7 @@ SECTIONS
  
 	/* Read-write data (initialized) */
 	.data BLOCK(4K) : ALIGN(4K)
-	{
+	{		
 		start_ctors = .;
 		KEEP(*( .ctors ));
     	KEEP(*( .init_array ));
@@ -35,7 +35,21 @@ SECTIONS
     	end_ctors = .;
 		*(.data)
 	}
- 
+
+	.modules BLOCK(4K) : ALIGN(4K)
+	{
+		mod_start = .;
+		KEEP(*( .modules ));
+    	KEEP(*(SORT_BY_INIT_PRIORITY( .modules.* )));
+    	mod_end = .;
+	}
+	.strtab BLOCK(4K) : ALIGN(4K)
+	{
+		str_start = .;
+		*(.strtab)
+		*(.symtab)
+		str_end = .;
+	}
 	/* Read-write data (uninitialized) and stack */
 	.bss BLOCK(4K) : ALIGN(4K)
 	{

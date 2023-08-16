@@ -13,6 +13,8 @@
 #include <libc.hpp>
 #include <malloc.hpp>
 #include <ahci.hpp>
+#include <bios32.hpp>
+#include <module.hpp>
 
 static Logging log("Kernel");
 
@@ -51,7 +53,7 @@ const char * mmap_type_to_string(multiboot_uint32_t type) {
 		case MULTIBOOT_MEMORY_BADRAM:
 			return "bad";
 		case MULTIBOOT_MEMORY_NVS:
-			return "nvs";
+			return "acpi nvs";
 		case MULTIBOOT_MEMORY_RESERVED:
 			return "reserved";
 		default:
@@ -61,6 +63,7 @@ const char * mmap_type_to_string(multiboot_uint32_t type) {
 
 void kbd_init();
 void test();
+void start();
 void int32_test()
 {
     int y;
@@ -152,7 +155,23 @@ void memmap_print() {
 }
 void vesa_set();
 void sched_start();
+void setup_tss();
+
+extern int mod_start, mod_end;
+
+void start_modules(MOD_TYPE type) {
+	int mod_addr = (int)&mod_start;
+	for (mod_addr=(int)&mod_start;mod_addr<(int)&mod_end;mod_addr+=sizeof(module_t)) {
+		module_t *mod = (module_t *)mod_addr;
+		if (mod->type == type) {
+			mod->entry();
+			log.info("Module %s started.\n", mod->name);
+		}
+	}
+}
+
 extern "C" void kernel_main(multiboot_info_t *m) {
+	asm volatile ("cli");
 	mbi = m;
 	regs16_t r;
 	r.ax = 0x4F02;
@@ -173,8 +192,10 @@ extern "C" void kernel_main(multiboot_info_t *m) {
 	pmm_init();
 	vesa_set();
 	ACPI::Init();
+	BIOS32::Init();
 	log.info("Starting drivers...\n");
 	PCI::Init(); // Init pci
+	start_modules(NEED_PCI);
 	Timer::Init(); // Init timer
 	//AHCI::Init(); // Init AHCI
 	//VMSVGA::Init(); // Init vmsvga
@@ -182,8 +203,9 @@ extern "C" void kernel_main(multiboot_info_t *m) {
 	kbd_init(); // Init keyboard.
 	//Mouse::Init(); // Init mouse
 	//for (;;);
+	start();
 	asm volatile ("hlt");
-	test();
+	//test();
 	log.info("Init done!\n");
 	sched_start();
 	for (;;);
