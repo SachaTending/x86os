@@ -20,6 +20,7 @@ typedef struct
 extern ata_dsk_t ata_disks[4];
 #endif
 int ata_rd(ata_dsk_t dsk, uint32_t sec, uint32_t *buf, uint32_t scount);
+int ata_wr(ata_dsk_t dsk, uint32_t sec, uint32_t *buf, uint32_t scount);
 // Registers
 
 #define REG_DATA 0x0
@@ -39,9 +40,11 @@ int ata_rd(ata_dsk_t dsk, uint32_t sec, uint32_t *buf, uint32_t scount);
 #define CONTROL_ZERO 0x00
 
 // Command reg
-#define COMMAND_IDENTIFY 0xEC
-#define COMMAND_DMA_READ 0xC8
-#define ATA_CMD_READ_PIO 0x20
+#define COMMAND_IDENTIFY    0xEC
+#define COMMAND_DMA_READ    0xC8
+#define ATA_CMD_READ_PIO    0x20
+#define ATA_CMD_WRITE_PIO   0x30
+#define ATA_CMD_CACHE_FLUSH 0xE7
 
 // Status reg
 #define STATUS_ERR 0x0

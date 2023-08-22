@@ -42,20 +42,27 @@ struct tss_entry_struct {
 typedef struct tss_entry_struct tss_entry_t;
 
 tss_entry_t tss_entry;
-
+#define SEGMENT 0x10
 void write_tss() {
 	// Compute the base and limit of the TSS for use in the GDT entry.
 	uint32_t base = (uint32_t) &tss_entry;
 	uint32_t limit = sizeof tss_entry;
 
 	// Add a TSS descriptor to the GDT.
-	GDT::SetDesc(5, base, base + limit, 0xE9, 0);
+	GDT::SetDesc(5, base, base + limit, 0x89, 0);
  
 	// Ensure the TSS is initially zero'd.
 	memset(&tss_entry, 0, sizeof tss_entry);
  
 	tss_entry.ss0  = 0x10;  // Set the kernel stack segment.
-	tss_entry.esp0 = 0x08; // Set the kernel stack pointer.
+	tss_entry.esp0 = 0; // Set the kernel stack pointer.
+#if 0
+    tss_entry.ds = SEGMENT;
+    tss_entry.es = SEGMENT;
+    tss_entry.fs = SEGMENT;
+    tss_entry.gs = SEGMENT;
+    tss_entry.ss = SEGMENT;
+#endif
 	//note that CS is loaded from the IDT entry and should be the regular kernel code segment
 }
  
@@ -69,6 +76,8 @@ void setup_tss() {
     uint32_t esp;
     asm volatile("mov %%esp, %0" : "=r"(esp));
     set_kernel_stack(esp);
+	gdt_flush((uint32_t)&gdt_info);
+	printf("gdt flushed\n");
     flush_tss();
     printf("tss flushed\n");
 }
@@ -84,6 +93,7 @@ void GDT::Init() {
     GDT::SetDesc(4, 0, 0xFFFFFFFF, 0xF2, 0xCF); // User mode data segment
 
     gdt_flush((uint32_t)&gdt_info);
+	setup_tss();
 }
 
 void GDT::SetDesc(int index, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran) {

@@ -40,7 +40,7 @@ extern "C" void irq_handler(registers_t *regs) {
         if (handlers[regs->int_no - 32] != 0) {
             handlers[regs->int_no - 32](regs);
         } else {
-            printf("WARN: unknown interrupt 0x%x(%d)\n", regs->int_no, regs->int_no);
+            //printf("WARN: unknown interrupt 0x%x(%d)\n", regs->int_no, regs->int_no);
         }
         outb(0x20, 0x20);
         if (regs->int_no > 0x28) {

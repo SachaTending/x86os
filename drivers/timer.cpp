@@ -29,12 +29,16 @@ int tasks = 0;
 
 void task1() {
     while (1) {
-        asm volatile ("cli");
+        asm volatile ("hlt");
     }
 }
 
 void task2() {
-    while (1); //printf("task2\n");
+    int d = 0;
+    while (1) {
+        d++;
+        //printf("d: %d\n", d);
+    }
 }
 void task3() {
     while (1); //printf("task3\n");

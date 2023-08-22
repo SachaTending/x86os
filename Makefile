@@ -11,7 +11,7 @@ OBJ =
 ifeq ($(OS),Windows_NT)
 is_win = yes
 endif
-ifeq (FORCE_NOWIN,yes)
+ifeq ($(FORCE_NOWIN),yes)
 is_win = no
 endif
 
@@ -19,7 +19,7 @@ all: kernel
 -include targets/*.mk
 .PHONY: kernel
 kernel: $(OBJ)
-ifeq (is_win,yes)
+ifeq ($(is_win),yes)
 	@echo "  [LD]   kernel.exe(temporary)"
 	@ld -A i386 -T link.ld -o kernel.exe -m i386pe $(OBJ)
 	@echo "Generating kernel..."
@@ -50,4 +50,4 @@ else
 	@-rm $(OBJ)
 endif
 run: kernel
-	@qemu-system-i386 -kernel kernel.elf -serial stdio -device vmware-svga -device rtl8139,netdev=a -netdev user,id=a,hostfwd=udp::1200-:1200 -m 512m
+	@qemu-system-i386 -kernel kernel.elf -serial stdio -device vmware-svga -device rtl8139,netdev=a -netdev user,id=a,hostfwd=udp::1200-:1200 -m 512m -hda fat32.vhd

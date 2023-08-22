@@ -42,7 +42,25 @@ static uint16_t get_io(ATA_DISK disk) {
     }
     return 0x170;
 }
-
+typedef struct {
+	uint16_t flags;
+	uint16_t unused1[9];
+	char     serial[20];
+	uint16_t unused2[3];
+	char     firmware[8];
+	char     model[40];
+	uint16_t sectors_per_int;
+	uint16_t unused3;
+	uint16_t capabilities[2];
+	uint16_t unused4[2];
+	uint16_t valid_ext_data;
+	uint16_t unused5[5];
+	uint16_t size_of_rw_mult;
+	uint32_t sectors_28;
+	uint16_t unused6[38];
+	uint64_t sectors_48;
+	uint16_t unused7[152];
+} __attribute__((packed)) ata_identify_t;
 static void setreg(ata_dsk_t dsk, uint16_t reg, uint8_t val) {
     outb(get_io(dsk.disk)+reg, val);
 }
@@ -107,20 +125,49 @@ int ata_rd(ata_dsk_t dsk, uint32_t sec, uint32_t *buf, uint32_t scount) {
     poll_ata(io);
     uint16_t *b = (uint16_t *)buf;
     for (int i=0;i<256*scount;i++) {
-        uint16_t d = inw(io);
-        b[i] = d;
+        b[i] = inw(io);
     }
 #if 1
     for (int i=0;i<512*scount;i++) {
-        printf("%c", buf[i]);
+        //printf("%c", buf[i]);
     }
     printf("\n");
 #endif
+    poll_ata(io);
     return 0;
 }
+int ata_wr(ata_dsk_t dsk, uint32_t sec, uint32_t *buf, uint32_t scount) {
+    uint16_t io = get_io(dsk.disk);
+    //log.info("0x%x %d 0x%x %d\n", io, sec, (uint32_t)buf, scount);
+    outb(io+REG_CONTROL, 0x02);
+    outb(io+REG_DRIVE, (0xE0 | (uint8_t)((sec >> 24 & 0x0F))));
+    outb(io+REG_SEC_COUNT, scount);
+    outb(io+REG_LBA_LO, sec & 0x000000ff);
+    outb(io+REG_LBA_MID, (sec & 0x0000ff00) >> 8);
+    outb(io+REG_LBA_HIGH, (sec & 0x00ff0000) >> 16);
+    outb(io+REG_CONTROL, ATA_CMD_WRITE_PIO);
+    poll_ata(io);
+    uint16_t *b = (uint16_t *)buf;
+    for (int i=0;i<256*scount;i++) {
+        outw(io, b[i]);
+    }
+    
+#if 1
+    for (int i=0;i<512*scount;i++) {
+        //printf("%c", buf[i]);
+    }
+    printf("\n");
+#endif
+    outb(io+REG_CONTROL, ATA_CMD_CACHE_FLUSH);
+    poll_ata(io);
+    return 0;
+}
+
 static void check_drives() {
     uint16_t pio = get_io(PRIMARY_MASTER);
     uint16_t sio = get_io(SECONDARY_MASTER);
+    ata_identify_t *ident;
+    uint16_t buf[256];
     outb(pio+REG_DRIVE, 0xA << 4); // select master drive
     outb(pio+REG_CONTROL, COMMAND_IDENTIFY);
     if (!(inb(pio+REG_CONTROL))) {
@@ -128,13 +175,15 @@ static void check_drives() {
         goto ps;
     }
     log.info("Primary master exists\n");
-    uint16_t buf[256];
     for(int i = 0; i < 256; i++) buf[i] = inw(pio);
-    log.info("buf: \n");
-    for (int i=0;i<512;i++) {
-        printf("%c", ((char *)&buf)[i]);
+    ident = (ata_identify_t *)&buf;
+    log.info("Model: ");
+    for (int i=0;i<40;i++) {
+        printf("%c", ident->model[i]);
     }
     printf("\n");
+    log.info("Sectors(LBA 28): %d\n", ident->sectors_28);
+    log.info("Sectors(LBA 48): %d\n", ident->sectors_48);
 ps:
     outb(pio+REG_DRIVE, (0xA + 1) << 4); // select slave drive
     outb(pio+REG_CONTROL, COMMAND_IDENTIFY);

@@ -180,10 +180,10 @@ extern "C" void kernel_main(multiboot_info_t *m) {
 	Terminal::Init();
 	callConstructors(); // Needed by logging system.
 	log.info("Starting...\n");
-	GDT::Init();
-	log.info("GDT Initializated.\n");
 	IDT::Init();
 	log.info("IDT Initializated.\n");
+	GDT::Init();
+	log.info("GDT Initializated.\n");
 	log.info("Im booted by: %s\n", mbi->boot_loader_name);
 	log.info("Memory map length: %u\n", mbi->mmap_length);
 	//vesa_test();

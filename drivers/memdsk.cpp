@@ -9,7 +9,7 @@ extern "C" {
 uint8 *dsk;
 
 int rd(uint32 sec, uint8 *buf, uint32 cnt) {
-    printf("rd: %u %u\n", sec, cnt);
+    //printf("rd: %u %u\n", sec, cnt);
     //memcpy(buf, &dsk[sec*512], cnt*512);
     ata_rd(ata_disks[0], sec, (uint32_t *)buf, cnt);
     return 1;
@@ -24,9 +24,7 @@ int wr(uint32 sec, uint8 *buf, uint32 cnt) {
     }
     printf("\n");
 #endif
-    for (int i=0;i<512*cnt;i++) {
-        dsk[i+(sec*512)] = buf[i];
-    }
+    ata_wr(ata_disks[0], sec, (uint32_t *)buf, cnt);
     return 1;
 }
 void print_err(int err) {
@@ -61,23 +59,23 @@ void start() {
     fl_init();
     dsk = (uint8 *)malloc(512*50000);
     int s = fl_attach_media(rd, wr);
+    void *fd;
     if (s != FAT_INIT_OK) {
         printf("err while initializating fatfs: ");
         print_err(s);
         return;
     }
-    printf("creating file...\n");
-    void *fd = 0;
-    //void *fd = fl_fopen("/a", "w");
-    //fl_fwrite("hello", 6, 1, fd);
-    //fl_fclose(fd);
-    printf("done\n");
     fl_listdirectory("/");
     printf("reading file...\n");
     fd = fl_fopen("/a", "r");
-    char buf[10];
-    fl_fread((void *)&buf, 6, 1, fd);
+    fl_fseek(fd, 0, SEEK_END);
+    int size = fl_ftell(fd);
+    printf("size: %d\n", size);
+    fl_fseek(fd, 0, SEEK_CUR);
+    char *buf = (char *)malloc(size);
+    memset(buf, 0, size);
+    fl_fread((void *)buf, size, 1, fd);
     fl_fclose(fd);
-    printf("%s\n", buf);
+    printf("%s", buf);
     printf("done\n");
 }
