@@ -16,6 +16,7 @@ typedef struct task {
     uint32_t eip;
     uint32_t esp;
     uint32_t entry;
+    bool usermode;
     task *next;
     registers_t regs;
     TASK_STATE state;
@@ -41,7 +42,9 @@ void task2() {
     }
 }
 void task3() {
-    while (1); //printf("task3\n");
+    while (1); {
+        asm volatile ("int $0x80");
+    }
 }
 extern "C" void perform_task_switch(uint32_t, uint32_t, uint32_t, uint32_t);
 extern "C" void usermode_entry();
@@ -54,6 +57,7 @@ void timer_idt(registers_t *regs) {
     timer_tick++;
     if (schedule2) {
         IDT::AddHandler(0, schedule_timer);
+        printf("multitasking yay\n");
     } else {
         //printf("no multitasking(\n");
     }
@@ -71,6 +75,9 @@ void schedule_timer(registers_t *regs) {
         regs->eip = current->eip;
         regs->esp = current->esp;
         current->state = TASK_RUNNING;
+        if (current->usermode) {
+            regs->eax = current->entry;
+        }
         //printf("%s->%s\n", prev->name, current->name);
     } else {
         memcpy(regs, &current->regs, sizeof(registers_t));
@@ -78,11 +85,28 @@ void schedule_timer(registers_t *regs) {
     //perform_task_switch(current->eip, current->ebp, current->esp);
     //printf("eip: old: 0x%u new: 0x%u\n", prev->eip, current->eip);
     //printf("esp: old: 0x%x new: 0x%x\n", prev->eip, current->eip);
-    //printf("name: old %s new %s\n", prev->name, current->name);
+    printf("name: old %s new %s\n", prev->name, current->name);
     //printf("%s->%s\n", prev->name, current->name);
     //printf("regs: eip: 0x%x ebp: 0x%x esp: 0x%x\n", regs->eip, regs->ebp, regs->esp);
 }
-
+void new_task_usermode(void(*task_func)(), const char *name) {
+    task_t *new_task = (task_t *)malloc(sizeof(task_t));
+    new_task->esp = (uint32_t)malloc(16384)+16384;
+    new_task->eip = (uint32_t)usermode_entry;
+    new_task->state = TASK_CREATED;
+    new_task->name = name;
+    new_task->next = root_task;
+    new_task->entry = (uint32_t)task_func;
+    new_task->usermode = true;
+    task_t *t = root_task;
+    while (t->next != root_task) {
+        printf("%s\n", t->name);
+        t = t->next;
+    }
+    t->next = new_task;
+    next_pid++;
+    tasks++;
+}
 void new_task(void(*task_func)(), const char *name) {
     task_t *new_task = (task_t *)malloc(sizeof(task_t));
     new_task->esp = (uint32_t)malloc(16384)+16384;
@@ -91,8 +115,10 @@ void new_task(void(*task_func)(), const char *name) {
     new_task->name = name;
     new_task->next = root_task;
     new_task->entry = (uint32_t)task_func;
+    new_task->usermode = false;
     task_t *t = root_task;
     while (t->next != root_task) {
+        printf("%s\n", t->name);
         t = t->next;
     }
     t->next = new_task;
@@ -111,12 +137,14 @@ void sched_start() {
     current->name = "Idle";
     current->pid = next_pid;
     current->next = current;
+    current->usermode = false;
     root_task = current;
     next_pid++;
     tasks++;
     // Create next task
     new_task(task2, "Dumb");
-    new_task(task3, "Dumb2");
+    printf("task dumb created\n");
+    new_task_usermode(task3, "Dumb2");
     schedule2 = true;
 }
 

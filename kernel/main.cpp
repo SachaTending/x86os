@@ -208,6 +208,7 @@ extern "C" void kernel_main(multiboot_info_t *m) {
 	//test();
 	log.info("Init done!\n");
 	sched_start();
+	log.info("sched started\n");
 	for (;;);
 	idle();
 }

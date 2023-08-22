@@ -24,6 +24,8 @@ IRQ  13,    45
 IRQ  14,    46
 IRQ  15,    47
 
+IRQ  80,    111
+
 %assign i 0 
 %rep    32 
     IRQ e%+i, i ; use DQ instead if targeting 64-bit

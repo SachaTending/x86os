@@ -34,13 +34,16 @@ static idt_handler_t handlers[255-31];
 void IDT::AddHandler(int vector, idt_handler_t handl) {
     handlers[vector] = handl;
 }
-
+void syscall() {
+    printf("int 0x80\n");
+}
 extern "C" void irq_handler(registers_t *regs) {
     if (regs->int_no > 31) {
         if (handlers[regs->int_no - 32] != 0) {
             handlers[regs->int_no - 32](regs);
         } else {
             //printf("WARN: unknown interrupt 0x%x(%d)\n", regs->int_no, regs->int_no);
+            if ((regs->int_no - 31) == 80) syscall();
         }
         outb(0x20, 0x20);
         if (regs->int_no > 0x28) {
@@ -91,6 +94,7 @@ void IDT::Init() {
     IDT::SetDesc(13, (uint32_t)irq13, 0x8E);
     IDT::SetDesc(14, (uint32_t)irq14, 0x8E);
     IDT::SetDesc(15, (uint32_t)irq15, 0x8E);
+    IDT::SetDesc(80, (uint32_t)irq80, 0x8E);
     idt_load();
     idt_remap();
     //asm volatile (".byte 0xff");

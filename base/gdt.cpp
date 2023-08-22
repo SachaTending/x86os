@@ -83,7 +83,7 @@ void setup_tss() {
 }
 
 void GDT::Init() {
-    gdt_info.limit = (sizeof(gdt_entry_t) * 5) - 1;
+    gdt_info.limit = (sizeof(gdt_entry_t) * 6) - 1;
     gdt_info.base  = (uint32_t)&gdt;
 
     GDT::SetDesc(0, 0, 0, 0, 0);                // Null segment
@@ -103,10 +103,11 @@ void GDT::SetDesc(int index, uint32_t base, uint32_t limit, uint8_t access, uint
     desc->base_low = base & 0xFFFF;
     desc->base_middle = (base >> 16) & 0xFF;
     desc->base_high = (base >> 24 & 0xFF);
-
+	printf("base: 0x%x 0x%x 0x%x\n", desc->base_low, desc->base_middle, desc->base_high);
     /* Low 16 bits and high 4 bits of limit, since the high 4 bits of limits is between granularity and access, and we don't have 4 bit variable,
     low 4 bits of granularity actually represents high 4 bits of limits. It's weird, I know. */
     desc->limit_low = limit & 0xFFFF;
+	printf("limit low: 0x%x\n", desc->limit_low);
     desc->granularity = (limit >> 16) & 0x0F;
 
     desc->access = access;

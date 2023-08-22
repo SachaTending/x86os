@@ -47,5 +47,6 @@ extern "C" {
 	extern void irq13();
 	extern void irq14();
 	extern void irq15();
+	extern void irq80();
 	extern void isr255();
 }

@@ -19,12 +19,6 @@ SECTIONS
 		*(.text)
 	}
  
-	/* Read-only data. */
-	.rodata BLOCK(4K) : ALIGN(4K)
-	{
-		*(.rodata)
-	}
- 
 	/* Read-write data (initialized) */
 	.data BLOCK(4K) : ALIGN(4K)
 	{		
@@ -34,6 +28,7 @@ SECTIONS
     	KEEP(*(SORT_BY_INIT_PRIORITY( .init_array.* )));
     	end_ctors = .;
 		*(.data)
+		*(.rodata) /* i know this is strange when read only data is in .data */
 	}
 
 	.modules BLOCK(4K) : ALIGN(4K)
