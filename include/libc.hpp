@@ -34,6 +34,7 @@ int memcmp(uint8_t * data1, uint8_t * data2, int n);
 int strcpy(char *dst,const char *src);
 int strlen(const char* str);
 int strcmp(const char *dst, char *src);
+int strncmp( const char* s1, const char* s2, int c );
 
 int atoi(char * string);
 void itoa(char *buf, unsigned long int n, int base);
